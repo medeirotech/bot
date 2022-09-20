@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  app:
+    container_name: medeiro-tech-discord-bot
+    build: .
+    env_file:
+      - .env
+    
+    
