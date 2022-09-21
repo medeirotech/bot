@@ -85,7 +85,6 @@ func addHandlers() {
 	bot.AddHandler(reactionAddHandler)
 	bot.AddHandler(reactionRemoveHandler)
 	bot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		log.Printf("Receiving interaction %+v\n", i)
 		if handler, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			handler(s, i)
 		}
