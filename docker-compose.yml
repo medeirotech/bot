@@ -2,7 +2,7 @@ version: '3'
 
 services:
   app:
-    container_name: medeiro-tech-discord-bot
+    container_name: medeiro-tech-reaction-bot
     build: .
     env_file:
       - .env

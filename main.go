@@ -3,11 +3,35 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
-	"github.com/liverday/medeiro-tech-reaction-bot/config"
+	"github.com/liverday/medeiro-tech-bot/config"
 )
+
+var (
+	cfg      *config.Config
+	commands = []*discordgo.ApplicationCommand{
+		{
+			Name:        "source",
+			Description: "Get the source code of this bot",
+		},
+	}
+	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"source": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "O link para o repositório é esse: https://github.com/liverday/medeiro-tech-bot",
+				},
+			})
+		},
+	}
+)
+
+var bot *discordgo.Session
 
 func contains(arr []string, target string) bool {
 	for _, s := range arr {
@@ -57,16 +81,37 @@ func reactionRemoveHandler(s *discordgo.Session, m *discordgo.MessageReactionRem
 	}
 }
 
+func addHandlers() {
+	bot.AddHandler(reactionAddHandler)
+	bot.AddHandler(reactionRemoveHandler)
+	bot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		log.Printf("Receiving interaction %+v\n", i)
+		if handler, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+			handler(s, i)
+		}
+	})
+}
+
+func addCommands() {
+	for _, command := range commands {
+		_, err := bot.ApplicationCommandCreate(bot.State.User.ID, cfg.GuildID, command)
+
+		if err != nil {
+			log.Fatalf("There was an error creating %v command: %v ", command.Name, err)
+		}
+	}
+}
+
 func start() {
 	log.Println("Starting MedeiroTech bot")
-	bot, err := discordgo.New(fmt.Sprintf("Bot %s", cfg.Token))
+	var err error
+	bot, err = discordgo.New(fmt.Sprintf("Bot %s", cfg.Token))
 
 	if err != nil {
 		log.Fatal("Error loading bot")
 	}
 
-	bot.AddHandler(reactionAddHandler)
-	bot.AddHandler(reactionRemoveHandler)
+	addHandlers()
 
 	err = bot.Open()
 
@@ -75,10 +120,10 @@ func start() {
 		return
 	}
 
-	log.Println("The bot is running")
-}
+	addCommands()
 
-var cfg *config.Config
+	log.Println("The bot is running. Press CTRL-C to exit.")
+}
 
 func main() {
 	err := godotenv.Load()
@@ -96,5 +141,9 @@ func main() {
 	cfg = config
 	start()
 
-	<-make(chan struct{})
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	<-stop
+
+	log.Println("Gracefully shutting down.")
 }

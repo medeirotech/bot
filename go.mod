@@ -1,4 +1,4 @@
-module github.com/liverday/medeiro-tech-reaction-bot
+module github.com/liverday/medeiro-tech-bot
 
 go 1.19
 
