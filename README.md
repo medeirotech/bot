@@ -16,7 +16,7 @@ You have to [setup a golang environment](https://go.dev) in your local machine a
 1. Install the dependencies of the module
 
 ```
-$ go mod tidy
+$ go mod download
 ```
 
 2. Create a `.env` file based on the `.env.example`, making the appropriate replacement
