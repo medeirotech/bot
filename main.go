@@ -91,12 +91,27 @@ func addHandlers() {
 	})
 }
 
-func addCommands() {
-	for _, command := range commands {
-		_, err := bot.ApplicationCommandCreate(bot.State.User.ID, cfg.GuildID, command)
+func addCommands() []*discordgo.ApplicationCommand {
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
+	for i, command := range commands {
+		createdCommand, err := bot.ApplicationCommandCreate(bot.State.User.ID, cfg.GuildID, command)
 
 		if err != nil {
 			log.Fatalf("There was an error creating %v command: %v ", command.Name, err)
+		}
+
+		registeredCommands[i] = createdCommand
+	}
+
+	return registeredCommands
+}
+
+func removeCommands(commands []*discordgo.ApplicationCommand) {
+	log.Println("Removing commands...")
+	for _, command := range commands {
+		err := bot.ApplicationCommandDelete(bot.State.User.ID, cfg.GuildID, command.ID)
+		if err != nil {
+			log.Panicf("Cannot delete '%v' command: %v", command.Name, err)
 		}
 	}
 }
@@ -119,9 +134,18 @@ func start() {
 		return
 	}
 
-	addCommands()
+	commands := addCommands()
 
 	log.Println("The bot is running. Press CTRL-C to exit.")
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	<-stop
+
+	if cfg.RemoveCommands {
+		removeCommands(commands)
+	}
+	log.Println("Gracefully shutting down.")
 }
 
 func main() {
@@ -139,10 +163,4 @@ func main() {
 
 	cfg = config
 	start()
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-	<-stop
-
-	log.Println("Gracefully shutting down.")
 }
