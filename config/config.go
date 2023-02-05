@@ -35,6 +35,7 @@ func Load() (*Config, error) {
 		"🏭": os.Getenv("BACKEND_ROLE_ID"),
 		"🚀": os.Getenv("FULLSTACK_ROLE_ID"),
 		"📱": os.Getenv("MOBILE_ROLE_ID"),
+		"💣": os.Getenv("QA_ROLE_ID"),
 	}
 
 	return cfg, nil
