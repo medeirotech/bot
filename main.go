@@ -9,6 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 	"github.com/liverday/medeiro-tech-bot/config"
+	"github.com/liverday/medeiro-tech-bot/handlers"
 )
 
 var (
@@ -18,17 +19,22 @@ var (
 			Name:        "source",
 			Description: "Get the source code of this bot",
 		},
+		{
+			Name:        "short_url",
+			Description: "Shorten an URL using curto.io engine",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "destination",
+					Description: "Destination",
+					Required:    true,
+				},
+			},
+		},
 	}
 	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"source": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Flags:   discordgo.MessageFlagsEphemeral,
-					Content: "O link para o repositório é esse: https://github.com/liverday/medeiro-tech-bot",
-				},
-			})
-		},
+		"source":    handlers.SourceHandler,
+		"short_url": handlers.ShortUrlHandler,
 	}
 )
 
