@@ -156,10 +156,14 @@ func start() {
 }
 
 func main() {
-	err := godotenv.Load()
+	env := os.Getenv("ENVIRONMENT")
 
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if env != "PRODUCTION" {
+		err := godotenv.Load()
+
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
 	}
 
 	config, err := config.Load()
