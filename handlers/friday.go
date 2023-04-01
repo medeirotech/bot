@@ -31,7 +31,7 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 			message.Content = "Sextouu família"
 			message.Files = append(message.Files, processGifUrl(fridayGifUrl))
 		default:
-			message.Content = "Calma lá família ainda não é sexta!"
+			message.Content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
 	}
 
 	s.ChannelMessageSendComplex(m.ChannelID, message)
@@ -55,4 +55,14 @@ func processGifUrl(url string) *discordgo.File {
 	}
 
 	return gifFile
+}
+
+func daysRemainingToFriday() int {
+	today := time.Now()
+
+	if today.Weekday() > time.Friday {
+		return int(today.Weekday())
+	} else {
+		return int(time.Friday) - int(today.Weekday()) 
+	}
 }
