@@ -78,22 +78,22 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case time.Friday:
 			message.Content = "Sextouu família"
 
-			randomGTenorGif := getRandomGif(fridayTrigger)
-			randomGifUrl := extractGifFromGTenor(randomGTenorGif, fridayGifUrl)
+			randomFridayGif := getRandomGif(fridayTrigger)
+			randomFridayGifUrl := extractGifFromGTenor(randomFridayGif, fridayGifUrl)
 
-			message.Files = append(message.Files, processGifUrl(randomGifUrl))
+			message.Files = append(message.Files, processGifUrl(randomFridayGifUrl))
 		case time.Thursday:
 			message.Content = "Quasee, mas ainda não"
 
 			randomThursdayGif := getRandomGif("falta-um-dia")
-			randomGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
+			randomThursdayGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
 
-			message.Files = append(message.Files, processGifUrl(randomGifUrl))
+			message.Files = append(message.Files, processGifUrl(randomThursdayGifUrl))
 		default:
 			message.Content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
 			
-			randomWeekdayGif := getRandomGif(time.Now().Weekday().String())
-			randomGifUrl := extractGifFromGTenor(randomWeekdayGif, fallbackGifUrl)
+			randomGif := getRandomGif(time.Now().Weekday().String())
+			randomGifUrl := extractGifFromGTenor(randomGif, fallbackGifUrl)
 
 			message.Files = append(message.Files, processGifUrl(randomGifUrl))
 	}
@@ -108,8 +108,8 @@ func getRandomGif(q string) (result GTenorMinimalReturn) {
 	}
 
 	query := req.URL.Query()
-	query.Add("key", "LIVDSRZULELA")
 	query.Add("q", q)
+	query.Add("key", "LIVDSRZULELA")
 	query.Add("media_filter", "minimal")
 	query.Add("limit", "1")
 
