@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strings"
-	"time"
 	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/liverday/medeiro-tech-bot/config"
 )
 
 var (
@@ -20,6 +21,8 @@ var (
 
 	fallbackGifUrl = "https://tenor.com/view/dancing-random-duck-gif-25973520"
 )
+
+var cfg config.Config
 
 type GTenorMinimalReturn struct {
 	Results []struct {
@@ -65,6 +68,8 @@ type GTenorMinimalReturn struct {
 }
 
 func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	cfg = config.GetConfig()
+
 	if !strings.Contains(m.Content, fridayTrigger) {
 		return
 	}
@@ -100,15 +105,15 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSendComplex(m.ChannelID, message)
 }
 
-func getRandomGif(q string) (result GTenorMinimalReturn) {
+func getRandomGif(search string) (result GTenorMinimalReturn) {
 	req, err := http.NewRequest("GET", gTenorUrl+"/random", nil)
 	if err != nil {
 		fmt.Println("Cannot make a new http Request", err)
 	}
 
 	query := req.URL.Query()
-	query.Add("q", q)
-	query.Add("key", "LIVDSRZULELA")
+	query.Add("q", search)
+	query.Add("key", cfg.GTenorKey)
 	query.Add("media_filter", "minimal")
 	query.Add("limit", "1")
 

@@ -11,6 +11,7 @@ type Config struct {
 	GuildID        string
 	ChannelID      string
 	MessageID      string
+	GTenorKey 	   string
 	RemoveCommands bool
 	RoleMap        map[string]string
 }
@@ -25,6 +26,7 @@ func Load() (*Config, error) {
 	cfg.GuildID = os.Getenv("GUILD_ID")
 	cfg.ChannelID = os.Getenv("CHANNEL_ID")
 	cfg.MessageID = os.Getenv("MESSAGE_ID")
+	cfg.GTenorKey = os.Getenv("GTENOR_KEY")
 	cfg.RemoveCommands, err = strconv.ParseBool(os.Getenv("REMOVE_COMMANDS"))
 
 	if err != nil {
@@ -42,10 +44,10 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
-func GetConfig()  {
-	if !cfg {
+func GetConfig() Config {
+	if cfg == nil {
 		log.Fatal("You must load the config")
 	}
 
-	return cfg
+	return *cfg
 }
