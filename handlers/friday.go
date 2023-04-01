@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
 	"io"
 	"net/http"
 
@@ -83,9 +82,9 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 			message.Files = append(message.Files, processGifUrl(randomFridayGifUrl))
 		case time.Thursday:
-			message.Content = "Quasee, mas ainda não"
+			message.Content = "Quase, mas ainda não"
 
-			randomThursdayGif := getRandomGif("falta-um-dia")
+			randomThursdayGif := getRandomGif("quase-la")
 			randomThursdayGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
 
 			message.Files = append(message.Files, processGifUrl(randomThursdayGifUrl))

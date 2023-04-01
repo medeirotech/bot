@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
 )
@@ -39,4 +40,12 @@ func Load() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func GetConfig()  {
+	if !cfg {
+		log.Fatal("You must load the config")
+	}
+
+	return cfg
 }
