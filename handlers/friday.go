@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -13,9 +14,56 @@ import (
 )
 
 var (
+	gTenorUrl     = "https://g.tenor.com/v1"
+	
 	fridayTrigger = "sextou"
 	fridayGifUrl  = "https://media.tenor.com/zGlEbV_bTnIAAAAC/kowalski-familia.gif"
+
+	fallbackGifUrl = "https://tenor.com/view/dancing-random-duck-gif-25973520"
 )
+
+type GTenorMinimalReturn struct {
+	Results []struct {
+		ID                 string `json:"id"`
+		Title              string `json:"title"`
+		ContentDescription string `json:"content_description"`
+		ContentRating      string `json:"content_rating"`
+		H1Title            string `json:"h1_title"`
+		Media              []struct {
+			Mp4 struct {
+				Dims     []int   `json:"dims"`
+				Preview  string  `json:"preview"`
+				Size     int     `json:"size"`
+				URL      string  `json:"url"`
+				Duration float64 `json:"duration"`
+			} `json:"mp4"`
+			Gif struct {
+				Size    int    `json:"size"`
+				URL     string `json:"url"`
+				Preview string `json:"preview"`
+				Dims    []int  `json:"dims"`
+			} `json:"gif"`
+			Tinygif struct {
+				Dims    []int  `json:"dims"`
+				Size    int    `json:"size"`
+				Preview string `json:"preview"`
+				URL     string `json:"url"`
+			} `json:"tinygif"`
+		} `json:"media"`
+		BgColor    string        `json:"bg_color"`
+		Created    float64       `json:"created"`
+		Itemurl    string        `json:"itemurl"`
+		URL        string        `json:"url"`
+		Tags       []interface{} `json:"tags"`
+		Flags      []interface{} `json:"flags"`
+		Shares     int           `json:"shares"`
+		Hasaudio   bool          `json:"hasaudio"`
+		Hascaption bool          `json:"hascaption"`
+		SourceID   string        `json:"source_id"`
+		Composite  interface{}   `json:"composite"`
+	} `json:"results"`
+	Next string `json:"next"`
+}
 
 func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if !strings.Contains(m.Content, fridayTrigger) {
@@ -29,12 +77,64 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch time.Now().Weekday() {
 		case time.Friday:
 			message.Content = "Sextouu família"
-			message.Files = append(message.Files, processGifUrl(fridayGifUrl))
+
+			randomGTenorGif := getRandomGif(fridayTrigger)
+			randomGifUrl := extractGifFromGTenor(randomGTenorGif, fridayGifUrl)
+
+			message.Files = append(message.Files, processGifUrl(randomGifUrl))
+		case time.Thursday:
+			message.Content = "Quasee, mas ainda não"
+
+			randomThursdayGif := getRandomGif("falta-um-dia")
+			randomGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
+
+			message.Files = append(message.Files, processGifUrl(randomGifUrl))
 		default:
 			message.Content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
+			
+			randomWeekdayGif := getRandomGif(time.Now().Weekday().String())
+			randomGifUrl := extractGifFromGTenor(randomWeekdayGif, fallbackGifUrl)
+
+			message.Files = append(message.Files, processGifUrl(randomGifUrl))
 	}
 
 	s.ChannelMessageSendComplex(m.ChannelID, message)
+}
+
+func getRandomGif(q string) (result GTenorMinimalReturn) {
+	req, err := http.NewRequest("GET", gTenorUrl+"/random", nil)
+	if err != nil {
+		fmt.Println("Cannot make a new http Request", err)
+	}
+
+	query := req.URL.Query()
+	query.Add("key", "LIVDSRZULELA")
+	query.Add("q", q)
+	query.Add("media_filter", "minimal")
+	query.Add("limit", "1")
+
+	req.URL.RawQuery = query.Encode()
+
+	client := http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error on get a random gif", err)
+	}
+
+	body, _ := io.ReadAll(res.Body)
+	if err := json.Unmarshal(body, &result); err != nil {
+		fmt.Println("Can not unmarshall JSON", err)
+	}
+
+	return result
+}
+
+func extractGifFromGTenor(gTenor GTenorMinimalReturn, fallback string) string {
+	if len(gTenor.Results) > 0 && len(gTenor.Results[0].Media) > 0 {
+		return gTenor.Results[0].Media[0].Gif.URL
+	}
+
+	return fallback
 }
 
 func processGifUrl(url string) *discordgo.File {
@@ -63,6 +163,6 @@ func daysRemainingToFriday() int {
 	if today.Weekday() > time.Friday {
 		return int(today.Weekday())
 	} else {
-		return int(time.Friday) - int(today.Weekday()) 
+		return int(time.Friday) - int(today.Weekday())
 	}
 }
