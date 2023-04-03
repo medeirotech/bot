@@ -82,31 +82,37 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		Files: []*discordgo.File{},
 	}
 
+	var content string
+	var gif GTenorMinimalReturn
+	var gifUrl string
+
 	switch time.Now().Weekday() {
 	case time.Friday:
-		message.Content = "Sextouu família"
+		content = "Sextouu família"
 
-		randomFridayGif := getRandomGif(fridayTrigger)
-		randomFridayGifUrl := extractGifFromGTenor(randomFridayGif, fridayGifUrl)
+		gif = getRandomGif(fridayTrigger)
+		gifUrl = extractGifFromGTenor(gif, fridayGifUrl)
 
-		message.Files = append(message.Files, processGifUrl(randomFridayGifUrl))
 	case time.Thursday:
-		message.Content = "Quase, mas ainda não"
+		content = "Quase, mas ainda não"
 
-		randomThursdayGif := getRandomGif("quase-la")
-		randomThursdayGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
-
-		message.Files = append(message.Files, processGifUrl(randomThursdayGifUrl))
+		gif = getRandomGif("quase-la")
+		gifUrl = extractGifFromGTenor(gif, fallbackGifUrl)
 	default:
-		message.Content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
+		content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
 
-		randomGif := getRandomGif(time.Now().Weekday().String())
-		randomGifUrl := extractGifFromGTenor(randomGif, fallbackGifUrl)
-
-		message.Files = append(message.Files, processGifUrl(randomGifUrl))
+		gif = getRandomGif(time.Now().Weekday().String())
+		gifUrl = extractGifFromGTenor(gif, fallbackGifUrl)
 	}
 
-	s.ChannelMessageSendComplex(m.ChannelID, message)
+	message.Content = content
+	message.Files = append(message.Files, processGifUrl(gifUrl))
+
+	_, err := s.ChannelMessageSendComplex(m.ChannelID, message)
+
+	if err != nil {
+		fmt.Println("Friday Handler - There was an exception when sending a message", err)
+	}
 }
 
 func getRandomGif(search string) (result GTenorMinimalReturn) {
@@ -146,7 +152,7 @@ func extractGifFromGTenor(gTenor GTenorMinimalReturn, fallback string) string {
 }
 
 func processGifUrl(url string) *discordgo.File {
-	res, err := http.Get(url)
+	res, err := http.Get(url + ".gif")
 	if err != nil {
 		fmt.Println("Bad request", err)
 	}
