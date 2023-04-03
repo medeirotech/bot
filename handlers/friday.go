@@ -14,12 +14,11 @@ import (
 )
 
 var (
-	gTenorUrl = "https://g.tenor.com/v1"
+	gTenorUrl = "https://tenor.googleapis.com/v2/search"
 
-	fridayTrigger = "sextou"
-	fridayGifUrl  = "https://media.tenor.com/zGlEbV_bTnIAAAAC/kowalski-familia.gif"
-
-	fallbackGifUrl = "https://tenor.com/view/dancing-random-duck-gif-25973520"
+	fridayTrigger  = "sextou"
+	fridayGifUrl   = "https://media.tenor.com/zGlEbV_bTnIAAAAC/kowalski-familia.gif"
+	fallbackGifUrl = "https://media.tenor.com/RtJifRTjOHEAAAAC/dancing-random.gif"
 )
 
 var cfg config.Config
@@ -31,7 +30,7 @@ type GTenorMinimalReturn struct {
 		ContentDescription string `json:"content_description"`
 		ContentRating      string `json:"content_rating"`
 		H1Title            string `json:"h1_title"`
-		Media              []struct {
+		Media              struct {
 			Mp4 struct {
 				Dims     []int   `json:"dims"`
 				Preview  string  `json:"preview"`
@@ -40,10 +39,11 @@ type GTenorMinimalReturn struct {
 				Duration float64 `json:"duration"`
 			} `json:"mp4"`
 			Gif struct {
-				Size    int    `json:"size"`
-				URL     string `json:"url"`
-				Preview string `json:"preview"`
-				Dims    []int  `json:"dims"`
+				Size     int    `json:"size"`
+				URL      string `json:"url"`
+				Preview  string `json:"preview"`
+				Dims     []int  `json:"dims"`
+				Duration int    `json:"duration"`
 			} `json:"gif"`
 			Tinygif struct {
 				Dims    []int  `json:"dims"`
@@ -51,7 +51,7 @@ type GTenorMinimalReturn struct {
 				Preview string `json:"preview"`
 				URL     string `json:"url"`
 			} `json:"tinygif"`
-		} `json:"media"`
+		} `json:"media_formats"`
 		BgColor    string        `json:"bg_color"`
 		Created    float64       `json:"created"`
 		Itemurl    string        `json:"itemurl"`
@@ -116,12 +116,13 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func getRandomGif(search string) (result GTenorMinimalReturn) {
-	req, err := http.NewRequest("GET", gTenorUrl+"/random", nil)
+	req, err := http.NewRequest("GET", gTenorUrl, nil)
 	if err != nil {
 		fmt.Println("Cannot make a new http Request", err)
 	}
 
 	query := req.URL.Query()
+	query.Add("random", "true")
 	query.Add("q", search)
 	query.Add("key", cfg.GTenorKey)
 	query.Add("media_filter", "minimal")
@@ -144,15 +145,15 @@ func getRandomGif(search string) (result GTenorMinimalReturn) {
 }
 
 func extractGifFromGTenor(gTenor GTenorMinimalReturn, fallback string) string {
-	if len(gTenor.Results) > 0 && len(gTenor.Results[0].Media) > 0 {
-		return gTenor.Results[0].Media[0].Gif.URL
+	if len(gTenor.Results) > 0 {
+		return gTenor.Results[0].Media.Gif.URL
 	}
 
 	return fallback
 }
 
 func processGifUrl(url string) *discordgo.File {
-	res, err := http.Get(url + ".gif")
+	res, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Bad request", err)
 	}
