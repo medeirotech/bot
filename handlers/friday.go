@@ -16,7 +16,7 @@ import (
 var (
 	gTenorUrl = "https://tenor.googleapis.com/v2/search"
 
-	fridayTrigger  = "sextou"
+	fridayTrigger  = "s e x t o u"
 	fridayGifUrl   = "https://media.tenor.com/zGlEbV_bTnIAAAAC/kowalski-familia.gif"
 	fallbackGifUrl = "https://media.tenor.com/RtJifRTjOHEAAAAC/dancing-random.gif"
 )
@@ -74,7 +74,7 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if !strings.Contains(m.Content, fridayTrigger) {
+	if !strings.Contains(strings.ToLower(m.Content), fridayTrigger) {
 		return
 	}
 
