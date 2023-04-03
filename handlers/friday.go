@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	gTenorUrl     = "https://g.tenor.com/v1"
-	
+	gTenorUrl = "https://g.tenor.com/v1"
+
 	fridayTrigger = "sextou"
 	fridayGifUrl  = "https://media.tenor.com/zGlEbV_bTnIAAAAC/kowalski-familia.gif"
 
@@ -70,6 +70,10 @@ type GTenorMinimalReturn struct {
 func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	cfg = config.GetConfig()
 
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+
 	if !strings.Contains(m.Content, fridayTrigger) {
 		return
 	}
@@ -79,27 +83,27 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	switch time.Now().Weekday() {
-		case time.Friday:
-			message.Content = "Sextouu família"
+	case time.Friday:
+		message.Content = "Sextouu família"
 
-			randomFridayGif := getRandomGif(fridayTrigger)
-			randomFridayGifUrl := extractGifFromGTenor(randomFridayGif, fridayGifUrl)
+		randomFridayGif := getRandomGif(fridayTrigger)
+		randomFridayGifUrl := extractGifFromGTenor(randomFridayGif, fridayGifUrl)
 
-			message.Files = append(message.Files, processGifUrl(randomFridayGifUrl))
-		case time.Thursday:
-			message.Content = "Quase, mas ainda não"
+		message.Files = append(message.Files, processGifUrl(randomFridayGifUrl))
+	case time.Thursday:
+		message.Content = "Quase, mas ainda não"
 
-			randomThursdayGif := getRandomGif("quase-la")
-			randomThursdayGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
+		randomThursdayGif := getRandomGif("quase-la")
+		randomThursdayGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
 
-			message.Files = append(message.Files, processGifUrl(randomThursdayGifUrl))
-		default:
-			message.Content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
-			
-			randomGif := getRandomGif(time.Now().Weekday().String())
-			randomGifUrl := extractGifFromGTenor(randomGif, fallbackGifUrl)
+		message.Files = append(message.Files, processGifUrl(randomThursdayGifUrl))
+	default:
+		message.Content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
 
-			message.Files = append(message.Files, processGifUrl(randomGifUrl))
+		randomGif := getRandomGif(time.Now().Weekday().String())
+		randomGifUrl := extractGifFromGTenor(randomGif, fallbackGifUrl)
+
+		message.Files = append(message.Files, processGifUrl(randomGifUrl))
 	}
 
 	s.ChannelMessageSendComplex(m.ChannelID, message)
