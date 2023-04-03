@@ -1,0 +1,172 @@
+package handlers
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/liverday/medeiro-tech-bot/config"
+)
+
+var (
+	gTenorUrl     = "https://g.tenor.com/v1"
+	
+	fridayTrigger = "sextou"
+	fridayGifUrl  = "https://media.tenor.com/zGlEbV_bTnIAAAAC/kowalski-familia.gif"
+
+	fallbackGifUrl = "https://tenor.com/view/dancing-random-duck-gif-25973520"
+)
+
+var cfg config.Config
+
+type GTenorMinimalReturn struct {
+	Results []struct {
+		ID                 string `json:"id"`
+		Title              string `json:"title"`
+		ContentDescription string `json:"content_description"`
+		ContentRating      string `json:"content_rating"`
+		H1Title            string `json:"h1_title"`
+		Media              []struct {
+			Mp4 struct {
+				Dims     []int   `json:"dims"`
+				Preview  string  `json:"preview"`
+				Size     int     `json:"size"`
+				URL      string  `json:"url"`
+				Duration float64 `json:"duration"`
+			} `json:"mp4"`
+			Gif struct {
+				Size    int    `json:"size"`
+				URL     string `json:"url"`
+				Preview string `json:"preview"`
+				Dims    []int  `json:"dims"`
+			} `json:"gif"`
+			Tinygif struct {
+				Dims    []int  `json:"dims"`
+				Size    int    `json:"size"`
+				Preview string `json:"preview"`
+				URL     string `json:"url"`
+			} `json:"tinygif"`
+		} `json:"media"`
+		BgColor    string        `json:"bg_color"`
+		Created    float64       `json:"created"`
+		Itemurl    string        `json:"itemurl"`
+		URL        string        `json:"url"`
+		Tags       []interface{} `json:"tags"`
+		Flags      []interface{} `json:"flags"`
+		Shares     int           `json:"shares"`
+		Hasaudio   bool          `json:"hasaudio"`
+		Hascaption bool          `json:"hascaption"`
+		SourceID   string        `json:"source_id"`
+		Composite  interface{}   `json:"composite"`
+	} `json:"results"`
+	Next string `json:"next"`
+}
+
+func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
+	cfg = config.GetConfig()
+
+	if !strings.Contains(m.Content, fridayTrigger) {
+		return
+	}
+
+	message := &discordgo.MessageSend{
+		Files: []*discordgo.File{},
+	}
+
+	switch time.Now().Weekday() {
+		case time.Friday:
+			message.Content = "Sextouu família"
+
+			randomFridayGif := getRandomGif(fridayTrigger)
+			randomFridayGifUrl := extractGifFromGTenor(randomFridayGif, fridayGifUrl)
+
+			message.Files = append(message.Files, processGifUrl(randomFridayGifUrl))
+		case time.Thursday:
+			message.Content = "Quase, mas ainda não"
+
+			randomThursdayGif := getRandomGif("quase-la")
+			randomThursdayGifUrl := extractGifFromGTenor(randomThursdayGif, fallbackGifUrl)
+
+			message.Files = append(message.Files, processGifUrl(randomThursdayGifUrl))
+		default:
+			message.Content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
+			
+			randomGif := getRandomGif(time.Now().Weekday().String())
+			randomGifUrl := extractGifFromGTenor(randomGif, fallbackGifUrl)
+
+			message.Files = append(message.Files, processGifUrl(randomGifUrl))
+	}
+
+	s.ChannelMessageSendComplex(m.ChannelID, message)
+}
+
+func getRandomGif(search string) (result GTenorMinimalReturn) {
+	req, err := http.NewRequest("GET", gTenorUrl+"/random", nil)
+	if err != nil {
+		fmt.Println("Cannot make a new http Request", err)
+	}
+
+	query := req.URL.Query()
+	query.Add("q", search)
+	query.Add("key", cfg.GTenorKey)
+	query.Add("media_filter", "minimal")
+	query.Add("limit", "1")
+
+	req.URL.RawQuery = query.Encode()
+
+	client := http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error on get a random gif", err)
+	}
+
+	body, _ := io.ReadAll(res.Body)
+	if err := json.Unmarshal(body, &result); err != nil {
+		fmt.Println("Can not unmarshall JSON", err)
+	}
+
+	return result
+}
+
+func extractGifFromGTenor(gTenor GTenorMinimalReturn, fallback string) string {
+	if len(gTenor.Results) > 0 && len(gTenor.Results[0].Media) > 0 {
+		return gTenor.Results[0].Media[0].Gif.URL
+	}
+
+	return fallback
+}
+
+func processGifUrl(url string) *discordgo.File {
+	res, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Bad request", err)
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println("Failed to get GIT", err)
+	}
+
+	gifFile := &discordgo.File{
+		Name:   "sextou-familia.gif",
+		Reader: bytes.NewReader(body),
+	}
+
+	return gifFile
+}
+
+func daysRemainingToFriday() int {
+	today := time.Now()
+
+	if today.Weekday() > time.Friday {
+		return int(today.Weekday())
+	} else {
+		return int(time.Friday) - int(today.Weekday())
+	}
+}

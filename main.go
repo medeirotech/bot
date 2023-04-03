@@ -36,6 +36,9 @@ var (
 		"source":    handlers.SourceHandler,
 		"short_url": handlers.ShortUrlHandler,
 	}
+	messageHandlers = map[string]func(s *discordgo.Session, m *discordgo.MessageCreate){
+		"friday": handlers.FridayHandler,
+	}
 )
 
 var bot *discordgo.Session
@@ -94,6 +97,11 @@ func addHandlers() {
 	bot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if handler, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 			handler(s, i)
+		}
+	})
+	bot.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		for _, handler := range messageHandlers {
+			handler(s, m)
 		}
 	})
 }
