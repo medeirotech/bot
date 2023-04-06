@@ -96,7 +96,7 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case time.Thursday:
 		content = "Quase, mas ainda não"
 
-		gif = getRandomGif("quase-sexta")
+		gif = getRandomGif("só-mais-um-dia")
 		gifUrl = extractGifFromGTenor(gif, fallbackGifUrl)
 	default:
 		content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
