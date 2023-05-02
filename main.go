@@ -32,10 +32,7 @@ var (
 			},
 		},
 	}
-	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"source":    handlers.SourceHandler,
-		"short_url": handlers.ShortUrlHandler,
-	}
+	commandHandlers map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)
 	messageHandlers = map[string]func(s *discordgo.Session, m *discordgo.MessageCreate){
 		"friday": handlers.FridayHandler,
 	}
@@ -92,6 +89,11 @@ func reactionRemoveHandler(s *discordgo.Session, m *discordgo.MessageReactionRem
 }
 
 func addHandlers() {
+	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"source":    handlers.SourceHandler,
+		"short_url": handlers.ShortUrlHandler(cfg),
+	}
+
 	bot.AddHandler(reactionAddHandler)
 	bot.AddHandler(reactionRemoveHandler)
 	bot.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {

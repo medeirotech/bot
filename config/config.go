@@ -11,9 +11,10 @@ type Config struct {
 	GuildID        string
 	ChannelID      string
 	MessageID      string
-	GTenorKey 	   string
+	GTenorKey      string
 	RemoveCommands bool
 	RoleMap        map[string]string
+	CurtoApiKey    string
 }
 
 var cfg *Config
@@ -28,6 +29,7 @@ func Load() (*Config, error) {
 	cfg.MessageID = os.Getenv("MESSAGE_ID")
 	cfg.GTenorKey = os.Getenv("GTENOR_KEY")
 	cfg.RemoveCommands, err = strconv.ParseBool(os.Getenv("REMOVE_COMMANDS"))
+	cfg.CurtoApiKey = os.Getenv("CURTO_API_KEY")
 
 	if err != nil {
 		return nil, err
