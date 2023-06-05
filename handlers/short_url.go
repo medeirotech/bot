@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/liverday/medeiro-tech-bot/config"
@@ -33,7 +34,7 @@ func worker(d string, cfg *config.Config) {
 	log.Printf("New Destination Received to shorten: %s\n", d)
 
 	apiRequest := &ApiRequest{
-		Link: d,
+		Link: strings.TrimSpace(d),
 	}
 
 	c := &http.Client{}
