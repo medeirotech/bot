@@ -30,7 +30,7 @@ var (
 )
 
 func worker(d string, cfg *config.Config) {
-	url := "https://api.curto.io/v1/urls"
+	url := "https://api.curto.io/v1/links"
 	log.Printf("New Destination Received to shorten: %s\n", d)
 
 	apiRequest := &ApiRequest{
