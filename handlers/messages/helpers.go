@@ -1,4 +1,4 @@
-package handlers
+package messages
 
 import (
 	"bytes"
@@ -15,10 +15,6 @@ import (
 
 var (
 	gTenorUrl = "https://tenor.googleapis.com/v2/search"
-
-	fridayTrigger  = "s e x t o u"
-	fridayGifUrl   = "https://media.tenor.com/zGlEbV_bTnIAAAAC/kowalski-familia.gif"
-	fallbackGifUrl = "https://media.tenor.com/RtJifRTjOHEAAAAC/dancing-random.gif"
 )
 
 var cfg config.Config
@@ -65,54 +61,6 @@ type GTenorMinimalReturn struct {
 		Composite  interface{}   `json:"composite"`
 	} `json:"results"`
 	Next string `json:"next"`
-}
-
-func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
-	cfg = config.GetConfig()
-
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-
-	if !strings.Contains(strings.ToLower(m.Content), fridayTrigger) {
-		return
-	}
-
-	message := &discordgo.MessageSend{
-		Files: []*discordgo.File{},
-	}
-
-	var content string
-	var gif GTenorMinimalReturn
-	var gifUrl string
-
-	switch time.Now().Weekday() {
-	case time.Friday:
-		content = "Sextouu família"
-
-		gif = getRandomGif(fridayTrigger)
-		gifUrl = extractGifFromGTenor(gif, fridayGifUrl)
-
-	case time.Thursday:
-		content = "Quase, mas ainda não"
-
-		gif = getRandomGif("quase-la")
-		gifUrl = extractGifFromGTenor(gif, fallbackGifUrl)
-	default:
-		content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingToFriday())
-
-		gif = getRandomGif(time.Now().Weekday().String())
-		gifUrl = extractGifFromGTenor(gif, fallbackGifUrl)
-	}
-
-	message.Content = content
-	message.Files = append(message.Files, processGifUrl(gifUrl))
-
-	_, err := s.ChannelMessageSendComplex(m.ChannelID, message)
-
-	if err != nil {
-		fmt.Println("Friday Handler - There was an exception when sending a message", err)
-	}
 }
 
 func getRandomGif(search string) (result GTenorMinimalReturn) {
@@ -164,20 +112,38 @@ func processGifUrl(url string) *discordgo.File {
 		fmt.Println("Failed to get GIT", err)
 	}
 
+	lastSlashIndex := strings.LastIndex(url, "/")
+	filename := url[lastSlashIndex+1:]
+
 	gifFile := &discordgo.File{
-		Name:   "sextou-familia.gif",
+		Name:   filename,
 		Reader: bytes.NewReader(body),
 	}
 
 	return gifFile
 }
 
-func daysRemainingToFriday() int {
+func daysReminingTo(day time.Weekday) int {
 	today := time.Now()
 
 	if today.Weekday() > time.Friday {
 		return int(today.Weekday())
 	} else {
-		return int(time.Friday) - int(today.Weekday())
+		return int(day) - int(today.Weekday())
 	}
+}
+
+func replyMessage(m *discordgo.MessageCreate, s *discordgo.Session, gifUrl string, content string) error {
+	message := &discordgo.MessageSend{
+		Content: content,
+		Files:   []*discordgo.File{processGifUrl(gifUrl)},
+		Reference: &discordgo.MessageReference{
+			MessageID: m.ID,
+			ChannelID: m.ChannelID,
+			GuildID:   m.GuildID,
+		},
+	}
+
+	_, err := s.ChannelMessageSendComplex(m.ChannelID, message)
+	return err
 }
