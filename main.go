@@ -35,6 +35,7 @@ var (
 	commandHandlers map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)
 	messageHandlers = map[string]func(s *discordgo.Session, m *discordgo.MessageCreate){
 		"friday": handlers.FridayHandler,
+		"sunday": handlers.SundayHandler,
 	}
 )
 
