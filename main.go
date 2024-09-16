@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/liverday/medeiro-tech-bot/config"
 	"github.com/liverday/medeiro-tech-bot/handlers"
+	"github.com/liverday/medeiro-tech-bot/handlers/messages"
 )
 
 var (
@@ -34,7 +35,8 @@ var (
 	}
 	commandHandlers map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate)
 	messageHandlers = map[string]func(s *discordgo.Session, m *discordgo.MessageCreate){
-		"friday": handlers.FridayHandler,
+		"friday": messages.FridayHandler,
+		"sunday": messages.SundayHandler,
 	}
 )
 
@@ -102,6 +104,9 @@ func addHandlers() {
 		}
 	})
 	bot.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author.ID == s.State.User.ID {
+			return
+		}
 		for _, handler := range messageHandlers {
 			handler(s, m)
 		}
