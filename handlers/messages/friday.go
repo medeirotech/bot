@@ -37,7 +37,7 @@ func FridayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		gifUrl = extractGifFromGTenor(gif, fridayFallbackGifUrl)
 
 	default:
-		content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysReminingTo(time.Friday))
+		content = fmt.Sprintf("Calma família ainda não é sexta! Falta %d dia(s)", daysRemainingTo(time.Friday))
 		gif = getRandomGif(time.Now().Weekday().String())
 		gifUrl = extractGifFromGTenor(gif, fridayFallbackGifUrl)
 	}

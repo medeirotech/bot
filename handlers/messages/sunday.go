@@ -42,7 +42,7 @@ func SundayHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		gifUrl = extractGifFromGTenor(gif, sundayFallbackGifUrl)
 
 	default:
-		content = fmt.Sprintf("Prepare-se, o evento canônico ocorrerá em %d dia(s)... Domingo a noite se aproxima.", daysReminingTo(time.Sunday))
+		content = fmt.Sprintf("Prepare-se, o evento canônico ocorrerá em %d dia(s)... Domingo a noite se aproxima.", daysRemainingTo(time.Sunday))
 		gif = getRandomGif("rezem")
 		gifUrl = extractGifFromGTenor(gif, sundayFallbackGifUrl)
 	}

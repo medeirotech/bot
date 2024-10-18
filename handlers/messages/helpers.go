@@ -123,13 +123,18 @@ func processGifUrl(url string) *discordgo.File {
 	return gifFile
 }
 
-func daysReminingTo(day time.Weekday) int {
+func daysRemainingTo(day time.Weekday) int {
 	today := time.Now()
 
-	if today.Weekday() > time.Friday {
-		return int(today.Weekday())
-	} else {
-		return int(day) - int(today.Weekday())
+	remaining := 0
+
+	for {
+		if (int(today.Weekday()) % 7 == int(day)) {
+			return remaining
+		}
+
+		remaining++
+		today = today.Add(time.Hour * 24)
 	}
 }
 
